@@ -1,0 +1,54 @@
+name: Bug report
+description: Report a reproducible problem in the project
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please provide enough detail to reproduce it quickly.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened and what did you expect?
+      placeholder: Clear, concise summary.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: Commands, inputs, and environment details used.
+      placeholder: |
+        1. uv sync --group dev
+        2. uv run ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Output
+      description: Paste traceback, CI output, or logs.
+      render: shell
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python version, and Ollama version.
+      placeholder: Windows 11, Python 3.14, Ollama 0.6.1
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit checklist
+      options:
+        - label: I searched existing issues.
+          required: true
+        - label: I can reproduce this on the latest main branch.
+          required: true

@@ -2,6 +2,22 @@ name: CI
 
 on:
   workflow_dispatch:
+    inputs:
+      run_extended_checks:
+        description: "Run optional extended checks (benchmark regression and optional slow tests)"
+        required: false
+        default: false
+        type: boolean
+      run_slow_tests:
+        description: "When running extended checks, also run slow judge tests"
+        required: false
+        default: false
+        type: boolean
+      benchmark_max_regression:
+        description: "Optional max tolerated deterministic score drop (e.g. 0.03)"
+        required: false
+        default: ""
+        type: string
   push:
     branches: [main, master]
   pull_request:
@@ -12,7 +28,7 @@ permissions:
 
 jobs:
   quality:
-    name: Lint, Type, and Test
+    name: Fast Quality Gate
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -24,15 +40,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup uv
+      - name: Setup uv with cache
         uses: astral-sh/setup-uv@v5
         with:
           python-version-file: .python-version
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
-      - name: Sync dependencies
+      - name: Install dependencies
         run: uv sync --group dev
 
-      - name: Install and start Ollama
+      - name: Install and start Ollama server
         run: |
           set -euo pipefail
           curl -fsSL https://ollama.com/install.sh | sh
@@ -52,25 +70,105 @@ jobs:
             sleep 2
           done
 
-      - name: Pull required models
+      - name: Pull required Ollama models
         run: |
           set -euo pipefail
           ollama pull llama3.2:3b
           ollama pull llama3.2:1b
 
-      - name: Run lightweight healthcheck
+      - name: Run runtime healthcheck
         run: uv run python scripts/healthcheck.py
 
-      - name: Optimize program
+      - name: Compile optimized DSPy artifact
         run: uv run python scripts/optimize.py
 
-      - name: Run lint
+      - name: Run lint and format checks
         run: |
           uv run ruff check .
           uv run ruff format --check .
 
-      - name: Run type check
+      - name: Run static type checks
         run: uv run mypy src scripts tests
 
       - name: Run tests with coverage
         run: uv run pytest -q -m "not slow" --cov=promptsops --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: error
+
+  extended-checks:
+    name: Extended Manual Checks
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_extended_checks }}
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OLLAMA_BASE_URL: http://127.0.0.1:11434
+      GENERATOR_MODEL: llama3.2:3b
+      JUDGE_MODEL: llama3.2:1b
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup uv with cache
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version-file: .python-version
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Install and start Ollama server
+        run: |
+          set -euo pipefail
+          curl -fsSL https://ollama.com/install.sh | sh
+
+          nohup ollama serve > /tmp/ollama.log 2>&1 &
+
+          for attempt in {1..30}; do
+            if ollama list > /dev/null 2>&1; then
+              break
+            fi
+            if [[ "$attempt" -eq 30 ]]; then
+              echo "Ollama failed to start after waiting 60 seconds"
+              echo "----- /tmp/ollama.log -----"
+              cat /tmp/ollama.log || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Pull required Ollama models
+        run: |
+          set -euo pipefail
+          ollama pull llama3.2:3b
+          ollama pull llama3.2:1b
+
+      - name: Run runtime healthcheck
+        run: uv run python scripts/healthcheck.py
+
+      - name: Compile optimized DSPy artifact
+        run: uv run python scripts/optimize.py
+
+      - name: Run full evaluation and persist benchmark result
+        run: uv run python scripts/run_eval.py
+
+      - name: Check benchmark regression (optional threshold)
+        run: |
+          set -euo pipefail
+          if [[ -n "${{ inputs.benchmark_max_regression }}" ]]; then
+            uv run python scripts/check_benchmark_regression.py --max-regression "${{ inputs.benchmark_max_regression }}"
+          else
+            uv run python scripts/check_benchmark_regression.py
+          fi
+
+      - name: Run slow judge tests
+        if: ${{ inputs.run_slow_tests }}
+        run: uv run pytest -q -m "slow"

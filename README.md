@@ -1,8 +1,17 @@
 # promptsops-ollama-dspy
 
+[![CI](https://github.com/sundar139/Promptsops-Ollama-DSPY/actions/workflows/ci.yml/badge.svg)](https://github.com/sundar139/Promptsops-Ollama-DSPY/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
+
 Local PromptsOps template for DSPy + Ollama.
 The repo evaluates and optimizes a tiny QA program, saves a compiled artifact,
 enforces quality gates, and can optionally emit OpenTelemetry traces.
+
+Companion docs:
+- docs/architecture.md
+- docs/benchmarking.md
+- CONTRIBUTING.md
+- CHANGELOG.md
 
 ## Quickstart
 
@@ -56,6 +65,31 @@ Run the slow judge test explicitly:
 uv run pytest -q -m "slow"
 ```
 
+## Test Scope
+
+| Marker / command | Scope | Default CI |
+| --- | --- | --- |
+| `-m "not slow"` | Unit + integration tests excluding judge-heavy checks | Yes |
+| `-m "slow"` | LLM-as-judge checks | No (manual only) |
+| `-m "not integration"` | Pure local unit-only checks | No |
+
+Coverage target is intentionally pragmatic (`fail_under = 60`) and currently sits above that floor. The focus is confidence and regression protection, not artificial 100% targets.
+
+## Benchmark Regression Tracking
+
+`run_eval.py` writes benchmark JSON snapshots to `artifacts/benchmark_results/`.
+Use the regression utility to compare `latest.json` to the most recent prior run.
+
+```sh
+uv run python scripts/check_benchmark_regression.py
+```
+
+Optional threshold gate (fails only on significant regressions):
+
+```sh
+uv run python scripts/check_benchmark_regression.py --max-regression 0.03
+```
+
 ## CI Behavior and Supported Branches
 
 Workflow file: .github/workflows/ci.yml
@@ -76,6 +110,15 @@ CI stages:
 8. Run lint
 9. Run type checks
 10. Run tests with coverage
+11. Upload coverage artifact
+
+Manually triggered extended checks can optionally run slow judge tests and benchmark regression checks without slowing default push/PR CI.
+
+## Branch Policy
+
+- `main` is the intended long-term default branch.
+- `master` remains fully supported in CI for compatibility.
+- Pull requests are expected to target `main` unless a migration/backport scenario requires otherwise.
 
 ## Test Markers
 
@@ -140,3 +183,4 @@ Tracing optional setup:
 - scripts/: executable entry points
 - tests/: unit/integration/slow tests
 - artifacts/: generated compiled program and benchmark outputs
+- docs/: focused architecture and benchmarking references

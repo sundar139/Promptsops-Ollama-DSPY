@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and usage discussion
+    url: https://github.com/sundar139/Promptsops-Ollama-DSPY/discussions
+    about: Ask questions and discuss ideas outside of actionable issue reports.

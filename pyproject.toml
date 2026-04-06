@@ -1,0 +1,29 @@
+[project]
+name = "promptsops"
+version = "0.1.0"
+description = "Local PromptsOps pipeline: evaluate, optimize, and version DSPy prompts with Ollama."
+readme = "README.md"
+authors = [
+    { name = "Rohith Sundar Jonnalagadda", email = "rohithsundar.1392001@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "arize-phoenix>=13.21.0",
+    "datasets>=4.8.4",
+    "dspy-ai>=3.1.3",
+    "httpx>=0.28.1",
+    "ollama>=0.6.1",
+    "openinference-instrumentation-dspy>=0.1.34",
+    "opentelemetry-exporter-otlp>=1.40.0",
+    "opentelemetry-sdk>=1.40.0",
+    "pytest>=9.0.2",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.2,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests that call the LLM judge (deselect with '-m not slow')",
+]

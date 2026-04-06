@@ -1,10 +1,13 @@
-from promptsops.config import configure_lm
+from promptsops.config import configure_lm, load_runtime_config
 from promptsops.dataset import load_tinyqa_examples
+from promptsops.healthcheck import assert_ollama_ready
 from promptsops.program import TinyQAProgram
 
 
 def main() -> None:
-    configure_lm()
+    config = load_runtime_config()
+    assert_ollama_ready(required_models=(config.generator_model,))
+    configure_lm(model_name=config.generator_model)
     _, dev = load_tinyqa_examples()
     program = TinyQAProgram()
 

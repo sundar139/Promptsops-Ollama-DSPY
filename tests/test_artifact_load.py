@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from promptsops.artifacts import ARTIFACT_PATH
 
 

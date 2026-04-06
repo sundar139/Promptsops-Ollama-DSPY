@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import os
 
+from openinference.instrumentation.dspy import DSPyInstrumentor
 from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from openinference.instrumentation.dspy import DSPyInstrumentor
 
 PHOENIX_ENDPOINT = os.getenv("PHOENIX_ENDPOINT", "http://localhost:6006/v1/traces")
 

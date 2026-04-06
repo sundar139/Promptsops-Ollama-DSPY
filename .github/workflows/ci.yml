@@ -1,35 +1,76 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
+
+permissions:
+  contents: read
 
 jobs:
-  test:
+  quality:
+    name: Lint, Type, and Test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OLLAMA_BASE_URL: http://127.0.0.1:11434
+      GENERATOR_MODEL: llama3.2:3b
+      JUDGE_MODEL: llama3.2:1b
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install uv
+      - name: Setup uv
         uses: astral-sh/setup-uv@v5
+        with:
+          python-version-file: .python-version
 
-      - name: Install Ollama
+      - name: Sync dependencies
+        run: uv sync --group dev
+
+      - name: Install and start Ollama
         run: |
+          set -euo pipefail
           curl -fsSL https://ollama.com/install.sh | sh
+
           nohup ollama serve > /tmp/ollama.log 2>&1 &
-          sleep 10
+
+          for attempt in {1..30}; do
+            if ollama list > /dev/null 2>&1; then
+              break
+            fi
+            if [[ "$attempt" -eq 30 ]]; then
+              echo "Ollama failed to start after waiting 60 seconds"
+              echo "----- /tmp/ollama.log -----"
+              cat /tmp/ollama.log || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Pull required models
+        run: |
+          set -euo pipefail
           ollama pull llama3.2:3b
           ollama pull llama3.2:1b
 
-      - name: Sync dependencies
-        run: uv sync
+      - name: Run lightweight healthcheck
+        run: uv run python scripts/healthcheck.py
 
       - name: Optimize program
         run: uv run python scripts/optimize.py
 
-      - name: Run tests
-        run: uv run pytest -q -m "not slow"
+      - name: Run lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Run type check
+        run: uv run mypy src scripts tests
+
+      - name: Run tests with coverage
+        run: uv run pytest -q -m "not slow" --cov=promptsops --cov-report=term-missing --cov-report=xml

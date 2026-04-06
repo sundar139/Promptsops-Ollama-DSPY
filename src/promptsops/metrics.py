@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+
 import dspy
 
 
@@ -48,7 +49,9 @@ class TinyQAJudge(dspy.Module):
         super().__init__()
         self.judge = dspy.Predict(self.JudgeSignature)
 
-    def forward(self, context: str, question: str, gold_answer: str, predicted_answer: str):
+    def forward(
+        self, context: str, question: str, gold_answer: str, predicted_answer: str
+    ) -> dspy.Prediction:
         return self.judge(
             context=context,
             question=question,
@@ -58,9 +61,10 @@ class TinyQAJudge(dspy.Module):
 
 
 def llm_as_judge_metric(example: dspy.Example, pred: dspy.Prediction) -> EvalResult:
-    from promptsops.config import configure_lm, JUDGE_MODEL
+    from promptsops.config import configure_lm, load_runtime_config
 
-    configure_lm(model_name=JUDGE_MODEL, temperature=0.0)
+    config = load_runtime_config()
+    configure_lm(model_name=config.judge_model, temperature=0.0)
     judge = TinyQAJudge()
 
     result = judge(

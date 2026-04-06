@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+
 import dspy
 
-from .config import configure_lm
+from .config import configure_lm, load_runtime_config
 from .dataset import load_tinyqa_examples
+from .healthcheck import assert_ollama_ready
 from .metrics import deterministic_metric
 from .program import TinyQAProgram
 
@@ -12,10 +14,17 @@ ARTIFACT_PATH = Path("artifacts/compiled_program.json")
 
 
 def optimize_tinyqa_program(output_path: str | None = None) -> str:
-    configure_lm()
-    train, dev = load_tinyqa_examples()
+    config = load_runtime_config()
+    assert_ollama_ready(required_models=(config.generator_model,))
+    configure_lm(model_name=config.generator_model)
+    train, _ = load_tinyqa_examples()
 
-    def metric_fn(example, prediction, trace=None):
+    def metric_fn(
+        example: dspy.Example,
+        prediction: dspy.Prediction,
+        trace: dspy.Trace | None = None,
+    ) -> float:
+        del trace
         return deterministic_metric(example, prediction).score
 
     optimizer = dspy.BootstrapFewShot(

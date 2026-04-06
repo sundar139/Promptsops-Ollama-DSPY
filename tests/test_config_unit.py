@@ -32,6 +32,8 @@ def test_configure_lm_rejects_empty_model_name() -> None:
 def test_configure_lm_builds_expected_lm(monkeypatch) -> None:
     captured: dict[str, object] = {}
 
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
     class FakeLM:
         def __init__(self, **kwargs):
             captured.update(kwargs)

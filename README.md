@@ -7,11 +7,25 @@ Local PromptsOps template for DSPy + Ollama.
 The repo evaluates and optimizes a tiny QA program, saves a compiled artifact,
 enforces quality gates, and can optionally emit OpenTelemetry traces.
 
-Companion docs:
-- docs/architecture.md
-- docs/benchmarking.md
-- CONTRIBUTING.md
-- CHANGELOG.md
+Start here:
+- [Architecture](docs/architecture.md)
+- [Benchmarking](docs/benchmarking.md)
+- [Contributing](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
+
+## What Was Added In This Session
+
+- Fast CI gate now runs lint, type checks, and fast tests independent of heavy optimization runtime.
+- Manual extended checks run healthcheck, bounded optimization, integration tests, benchmark regression checks, and optional slow judge tests.
+- Benchmark regression utility is now part of standard workflow:
+  - `uv run python scripts/check_benchmark_regression.py`
+  - optional fail gate: `--max-regression 0.03`
+- Optimization is now bounded/configurable via `scripts/optimize.py` flags:
+  - `--max-train-examples`
+  - `--max-bootstrapped-demos`
+  - `--max-labeled-demos`
+- CI now reads `HF_TOKEN` from GitHub Actions secrets when configured.
+- Collaboration hygiene added: issue templates, PR template, CONTRIBUTING, CHANGELOG, docs/architecture, docs/benchmarking.
 
 ## Quickstart
 
@@ -31,6 +45,7 @@ uv sync --group dev
 uv run python scripts/healthcheck.py
 uv run python scripts/optimize.py
 uv run python scripts/run_eval.py
+uv run python scripts/check_benchmark_regression.py
 ```
 
 The evaluation command writes benchmark artifacts to artifacts/benchmark_results/.
@@ -70,7 +85,8 @@ uv run pytest -q -m "slow"
 
 | Marker / command | Scope | Default CI |
 | --- | --- | --- |
-| `-m "not slow"` | Unit + integration tests excluding judge-heavy checks | Yes |
+| `-m "not integration and not slow"` | Fast unit-focused checks | Yes |
+| `-m "not slow"` | Unit + integration tests excluding judge-heavy checks | No (recommended local gate) |
 | `-m "slow"` | LLM-as-judge checks | No (manual only) |
 | `-m "not integration"` | Pure local unit-only checks | No |
 
@@ -99,6 +115,13 @@ CI runs on:
 - push to main and master
 - pull requests targeting main and master
 - manual trigger via workflow_dispatch
+
+Manual workflow inputs (for bounded extended checks):
+- `run_extended_checks`
+- `run_slow_tests`
+- `benchmark_max_regression`
+- `optimize_max_train_examples`
+- `optimize_max_bootstrapped_demos`
 
 CI stages:
 1. Checkout

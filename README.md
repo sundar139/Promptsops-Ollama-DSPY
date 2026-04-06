@@ -45,7 +45,8 @@ Validation covers:
 - Deterministic and integration pytest checks
 - Coverage reporting for the promptsops package
 
-Default CI excludes slow judge tests with -m "not slow".
+Default CI runs fast unit-focused checks with `-m "not integration and not slow"`.
+Integration and optimization checks are available via manual extended workflow dispatch.
 
 ## Development Checks
 
@@ -103,16 +104,12 @@ CI stages:
 1. Checkout
 2. Setup uv
 3. Sync dependencies
-4. Install/start Ollama
-5. Pull required models
-6. Run healthcheck
-7. Optimize program
-8. Run lint
-9. Run type checks
-10. Run tests with coverage
-11. Upload coverage artifact
+4. Run lint
+5. Run type checks
+6. Run fast tests with coverage
+7. Upload coverage artifact
 
-Manually triggered extended checks can optionally run slow judge tests and benchmark regression checks without slowing default push/PR CI.
+Manually triggered extended checks run runtime healthcheck, bounded optimization, integration tests, benchmark regression checks, and optional slow judge tests.
 
 ## Branch Policy
 
@@ -160,6 +157,9 @@ Missing model error:
   - ollama pull llama3.2:3b
   - ollama pull llama3.2:1b
 - Or set GENERATOR_MODEL and JUDGE_MODEL to models you have locally.
+
+HF dataset rate limits in CI:
+- Add `HF_TOKEN` as a GitHub Actions secret and it will be picked up automatically by the workflow.
 
 Artifact missing:
 - Generate compiled artifact: uv run python scripts/optimize.py

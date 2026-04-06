@@ -41,12 +41,14 @@ uv run python scripts/healthcheck.py
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy src scripts tests
-uv run pytest -q -m "not slow" --cov=promptsops --cov-report=term-missing --cov-report=xml
+uv run pytest -q -m "not integration and not slow" --cov=promptsops --cov-report=term-missing --cov-report=xml
 ```
 
 Optional extended checks:
 
 ```sh
+uv run python scripts/optimize.py --max-train-examples 4 --max-bootstrapped-demos 2
+uv run pytest -q -m "integration and not slow"
 uv run pytest -q -m "slow"
 uv run python scripts/run_eval.py
 uv run python scripts/check_benchmark_regression.py --max-regression 0.03

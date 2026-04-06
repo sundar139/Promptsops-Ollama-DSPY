@@ -11,7 +11,7 @@ Paste exact commands run locally and key outputs.
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy src scripts tests
-uv run pytest -q -m "not slow" --cov=promptsops --cov-report=term-missing --cov-report=xml
+uv run pytest -q -m "not integration and not slow" --cov=promptsops --cov-report=term-missing --cov-report=xml
 ```
 
 ## Scope checks

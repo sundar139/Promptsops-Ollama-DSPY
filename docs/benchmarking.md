@@ -35,3 +35,14 @@ Behavior:
 - With --max-regression, the command fails only when the score drop exceeds the threshold.
 
 This keeps regression tracking deterministic and lightweight for local development and optional CI usage.
+
+## Generate Baseline vs Compiled Lift Table
+
+To compute baseline (uncompiled) and compiled QA accuracy and update the README comparison table:
+
+```sh
+uv run python scripts/update_lift_table.py --sample-size 20 --write-readme
+```
+
+This command evaluates both variants on the same dev slice and rewrites the section between
+`LIFT_TABLE_START` and `LIFT_TABLE_END` markers in `README.md`.

@@ -15,14 +15,22 @@ It is designed for teams and individuals who want reproducible prompt iteration 
 
 The core DSPy value proposition is measurable lift from compilation. Track and publish baseline-vs-compiled QA accuracy side-by-side:
 
+<!-- LIFT_TABLE_START -->
 | Variant | QA Accuracy | Delta vs Baseline |
 | --- | ---: | ---: |
-| Baseline QA program (before DSPy compile) | 0.700 | +0.000 |
-| Compiled DSPy program (after optimization) | 0.731 | +0.031 |
+| Baseline QA program (before DSPy compile) | 0.738 | +0.000 |
+| Compiled DSPy program (after optimization) | 0.731 | -0.006 |
 
-Delta calculation: $0.731 - 0.700 = +0.031$.
+Delta calculation: $0.731 - 0.738 = -0.006$.
+<!-- LIFT_TABLE_END -->
 
 Use at least a 20-sample evaluation slice when producing this table for reports/PRs.
+
+Regenerate this section from live runs:
+
+```sh
+uv run python scripts/update_lift_table.py --sample-size 20 --write-readme
+```
 
 ### Who This Is For
 

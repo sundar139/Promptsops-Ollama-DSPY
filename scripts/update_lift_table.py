@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import Protocol, Sequence
+
+import dspy
 
 from promptsops.artifacts import load_compiled_program
 from promptsops.config import configure_lm, load_runtime_config
@@ -12,6 +15,10 @@ from promptsops.program import TinyQAProgram
 
 START_MARKER = "<!-- LIFT_TABLE_START -->"
 END_MARKER = "<!-- LIFT_TABLE_END -->"
+
+
+class _QAProgram(Protocol):
+    def __call__(self, *, context: str, question: str) -> dspy.Prediction: ...
 
 
 def _parse_args() -> argparse.Namespace:
@@ -37,7 +44,7 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _score_program(program: object, dev_examples: list[object]) -> float:
+def _score_program(program: _QAProgram, dev_examples: Sequence[dspy.Example]) -> float:
     if not dev_examples:
         raise ValueError("No dev examples available for evaluation.")
 

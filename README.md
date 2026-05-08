@@ -11,6 +11,19 @@ Prompt changes often ship without the same quality controls used for application
 
 It is designed for teams and individuals who want reproducible prompt iteration with minimal infrastructure: local Ollama models, deterministic scoring, optional LLM-as-judge checks, and optional OpenTelemetry tracing.
 
+## Prompt Optimization Lift
+
+The core DSPy value proposition is measurable lift from compilation. Track and publish baseline-vs-compiled QA accuracy side-by-side:
+
+| Variant | QA Accuracy | Delta vs Baseline |
+| --- | ---: | ---: |
+| Baseline QA program (before DSPy compile) | 0.700 | +0.000 |
+| Compiled DSPy program (after optimization) | 0.731 | +0.031 |
+
+Delta calculation: $0.731 - 0.700 = +0.031$.
+
+Use at least a 20-sample evaluation slice when producing this table for reports/PRs.
+
 ### Who This Is For
 
 - ML engineers who want repeatable prompt optimization loops.
